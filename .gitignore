@@ -135,7 +135,6 @@ Data
 *.swn
 *.csv
 *.hdf5
-*.txt
 settings.json
 *.nc
 *.asv
