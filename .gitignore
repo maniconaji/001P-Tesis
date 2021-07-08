@@ -127,3 +127,16 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+#Folder
+Data
+*.mpp
+*.mat
+*.swn
+*.csv
+*.hdf5
+*.txt
+settings.json
+*.nc
+*.asv
+*.bot
