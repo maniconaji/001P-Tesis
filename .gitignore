@@ -129,8 +129,9 @@ dmypy.json
 .pyre/
 
 #Folder
-Data
 *.mpp
+*.grb2
+*.grb
 *.mat
 *.swn
 *.csv
