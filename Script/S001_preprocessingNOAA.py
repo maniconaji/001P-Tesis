@@ -1,9 +1,12 @@
 #Importar paquetes y definir funciones principales (ver haciendo doble click)
 import wget
 import os
+import itertools
 import numpy as np
+import pandas as pd
+from glob import glob
 import urllib.request
-import cdsapi
+import xarray as xr
 
 def url_is_alive(url):
     """
@@ -59,34 +62,44 @@ def descargasarchivos_multi1(path_folder, variable, anho_min, anho_max,**kwargs)
     print("termino iteración de variable:", variable)
     return
 
-def descargas_era5copernicus(path_folder, min_year, max_year, variables, area):
+def conversiongrib2toCSVNOAA(path_src, path_out, area, min_year, max_year):
     """
-    Función para descargar archivos provenientes del centro de modelamiento ambiental del NOAA
+    Función para convertir los archivos .grb o .grb2 a .csv
     https://polar.ncep.noaa.gov/waves/download.shtml?
     
-    path_folder   (str): dirección donde serán descargados los archivos.
-    min_year      (int): año mínimo a descargar.
-    max_year      (int): año máximo a descargar.
-    variables    (list): lista con variables a descargar.
-    area         (list): lista con coordenadas -> [N, W, S, E] ejemplo: [-35, -76, -39,-72]
+    path_src      (str): dirección donde serán descargados los archivos
+    path_out      (str): dirección donde serán descargados los archivos.
+    area         (list): lista con los valores de la coordenada en WSG84 [N, W, S, E]
+    variable      (str): variable a descargar, puede ser dp, hs, tp y wind.
+    anho_min      (int): año máximo a descargar, las modelaciones comenzaron el año 2006.
+    anho_max      (int): año mínimo a descargar, considerando que el máximo es el año 2018.
     """
-    c = cdsapi.Client()
-    
+
     years  = np.arange(min_year, max_year + 1, 1, dtype=int).astype('str').tolist()
     months = ['0'+str(m) if m<10 else str(m) for m in np.linspace(1, 12, num=12, dtype=int)]
-    days   = ['0'+str(d) if d<10 else str(d) for d in np.linspace(1, 31, num=31, dtype=int)]
-    hours  = ['00:00', '03:00', '06:00','09:00', '12:00', '15:00','18:00', '21:00',]
-
-    c.retrieve(
-        'reanalysis-era5-single-levels',
-        {
-            'product_type': 'reanalysis',
-            'variable': variables,
-            'year': years,
-            'month': months,
-            'day': days,
-            'time': hours,
-            'area': area,
-            'format': 'grib',
-        }, path_folder+'/wave_miny'+str(min_year)+'-'+str(max_year)+'.grib')
-    return
+    years_months = [year+month for year, month in itertools.product(years, months)]
+    for year_month in years_months:
+        if os.path.isfile(path_out+'/datos_'+year_month+'.csv')==False:
+            ds = xr.open_mfdataset(
+                path_src+'/*'+year_month+'.grb2', engine='cfgrib', drop_variables = ['surface','time']
+                )
+            ds = ds.assign_coords(step=(ds.valid_time)).rename({'step':'time'}).drop_vars("valid_time")
+            ds = ds.assign_coords(longitude=(((ds.longitude + 180) % 360) - 180)).sortby('longitude')
+            ds = ds.where(ds.latitude <= area[0], drop=True)\
+                .where(ds.longitude >= area[1], drop=True)\
+                    .where(ds.latitude >= area[2], drop=True)\
+                        .where(ds.longitude <= area[3], drop=True)
+            ds = ds.drop_isel(time=-1)
+            _ = [os.remove(file) for file in glob("Data/grib_NOAA/*.idx")]
+            ds.to_dataframe().dropna().reset_index().to_csv(path_out+'/datos_'+year_month+'.csv', index=False)
+        else:
+            pass
+    if os.path.isfile(path_out+'/_entrada_modelo.csv') == False:
+        df = [pd.read_csv(path_file) for path_file in glob(path_out+'/*csv') if (path_file != path_out+'/_entrada_modelo.csv')]
+        df = pd.concat(df)
+        df.to_csv(path_out+'/_entrada_modelo.csv', index=False)
+        return df
+    else:
+        df = pd.read_csv(path_out+'/_entrada_modelo.csv')
+        df.time = pd.to_datetime(df.time, format="%Y-%m-%d %H:%M:%S")
+        return df

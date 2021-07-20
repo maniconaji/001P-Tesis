@@ -140,3 +140,7 @@ settings.json
 *.nc
 *.asv
 *.bot
+*.grib
+*.grb
+*.idx
+memoria_2postprocessing.ipynb
