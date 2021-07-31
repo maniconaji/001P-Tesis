@@ -105,10 +105,15 @@ def EscrituraSwanFile(df, path_out, model, nodos, parameters, variables, **kwarg
         file.write(
             f'GROUP \'OUTPUT\' SUBGRID %i %i %i %i' %(model_parameters("group", **kwargs)) +'\n'
             f'OUTPut OPTIons BLOCK %i %i' %(model_parameters("output", **kwargs)) +'\n'
-            f'BLOCK \'OUTPUT\' NOHEADER \'Output/block-mat/{fecha}_{model}.mat\' LAY-OUT 1 '+parameters+' \n'
+        )
+        for parameter in parameters.split():
+            file.write(
+                f'BLOCK \'OUTPUT\' NOHEADER \'Output/block-mat/{parameter}-{fecha}-{model}.mat\' LAY-OUT 1 XP YP '+parameter+' \n'
+            )
+        file.write(
             f'$\n'
             f'POINts \'Points\' FILE \'Points.pnt\' \n'
-            f'TABLe \'Points\' NOHEADER \'Output/point/{fecha}_{model}.txt\' '+parameters+' \n'
+            f'TABLe \'Points\' NOHEADER \'Output/point/{fecha}_{model}.txt\' XP YP '+parameters+' \n'
             f'$\n'
             f'RAY \'RAY\' %.2f %.2f %.2f %.2f %i %.2f %.2f %.2f %.2f' %(model_parameters("ray", **kwargs)) +'\n'
             f'$\n'
@@ -117,7 +122,7 @@ def EscrituraSwanFile(df, path_out, model, nodos, parameters, variables, **kwarg
             name_veril = "V0%i" %(depth) if (depth < 100) else "V%i" %(depth)
             file.write(
                 f'ISOline \'%s\' \'RAY\' DEPth %i' %(name_veril, depth) +'\n'
-                f'TABLe \'%s\' NOHEADER \'Output/isoline/{fecha}_{model}_%s.txt\' '%(name_veril, name_veril) +parameters+' \n'
+                f'TABLe \'%s\' NOHEADER \'Output/isoline/{fecha}_{model}_%s.txt\' '%(name_veril, name_veril) +'XP YP '+parameters+' \n'
                 f'$\n'
             )
         file.write(

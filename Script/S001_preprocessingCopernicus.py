@@ -7,21 +7,20 @@ from glob import glob
 
 def descargas_era5copernicus(path_folder, year, variables, area):
     """
-    Función para descargar archivos provenientes del centro de modelamiento ambiental del NOAA
-    https://polar.ncep.noaa.gov/waves/download.shtml?
+    Función para descargar archivos provenientes del proyecto Copernicus.
     
     path_folder   (str): dirección donde serán descargados los archivos.
-    min_year      (int): año mínimo a descargar.
-    max_year      (int): año máximo a descargar.
+    year          (int): año a descargar.
     variables    (list): lista con variables a descargar.
     area         (list): lista con coordenadas -> [N, W, S, E] ejemplo: [-35, -76, -39,-72]
     """
     
-    
+    #crear lista con años, meses y horas a descargar.
     months = ['0'+str(m) if m<10 else str(m) for m in np.linspace(1, 12, num=12, dtype=int)]
     days   = ['0'+str(d) if d<10 else str(d) for d in np.linspace(1, 31, num=31, dtype=int)]
     hours  = ['00:00', '03:00', '06:00','09:00', '12:00', '15:00', '18:00', '21:00',]
 
+    #revisar que los archivos están descargados.
     if os.path.isfile(path_folder+'/wave_y'+str(year)+'.grib')==False:
         c = cdsapi.Client()
         c.retrieve(
@@ -41,6 +40,16 @@ def descargas_era5copernicus(path_folder, year, variables, area):
     return
 
 def conversiongrib2toCSVCopernicus(path_src, path_out, min_year, max_year):
+
+    """
+    Función para convertir los archivos .grb o .grb2 a .csv
+    
+    path_src      (str): dirección de los archivos de entrada.
+    path_out      (str): dirección de los archivos de salida.
+    min_year      (int): año mínimo.
+    max_year      (int): año máximo.
+    """
+
     if os.path.isfile(path_out+'/datos_'+str(min_year)+'-'+str(max_year)+'.csv')==False:
         ds_all = xr.open_mfdataset(path_src+"/*.grib", combine="nested", concat_dim="time")\
             .drop_vars(["number","step", "meanSea", "valid_time"])

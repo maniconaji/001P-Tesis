@@ -143,4 +143,5 @@ settings.json
 *.grib
 *.grb
 *.idx
+dask-worker-space
 memoria_2postprocessing.ipynb

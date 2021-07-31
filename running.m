@@ -1,13 +1,13 @@
 clear all
 clc
-path = dir(fullfile('Output/block-mat/','*.mat'));
+path = dir(fullfile('Output/mat_block/','*.mat'));
 for i=1:length(path)    
-%     dt = datetime(replace(path(i).name,"_P1.mat",""),'InputFormat', 'yyyyMMdd''T''HH', 'TimeZone','UTC');
-    dt = str2num(['uint64(',replace(replace(path(i).name,"_P1.mat","0000"),"T",""),')']);
+    names = split(path(i).name,"-")
+    path_name = string(names(2))+'0000'
+    dt = str2num(['uint64(',replace(path_name,"T",""),')']);
     disp(path(i).name)
-%     disp(replace(path(i).name,".mat",".nc"))
     disp(dt)
-    path_src=strcat('Output/block-mat/',path(i).name);
-    path_out=strcat('Output/block-nc/',replace(path(i).name,".mat",".nc"));
+    path_src=strcat('Output/mat_block/',path(i).name);
+    path_out=strcat('Output/nc_block/',replace(path(i).name,".mat",".nc"));
     convert_MATtoNC(path_src, path_out, dt)
 end
